@@ -1,0 +1,126 @@
+# Base de regles approfondie - Systeme Expert Yamaha
+# Format : hypothese1 hypothese2 -> conclusion ;
+# Arbre hierarchique multicritere pour haute fiabilite.
+
+######################################################################
+# ARBRE 1 : PROBLEMES DE DEMARRAGE (General a toutes les motos)
+######################################################################
+
+# Niveau 1 : Analyse electrique de base
+s_pb_demarrage s_contact_mis s_tableau_allume -> elec_base_ok ;
+s_pb_demarrage s_contact_mis s_tableau_eteint -> elec_hs ;
+
+# Branche Elec HS
+elec_hs s_fusible_principal_hs -> diag_fusible_principal ;
+elec_hs s_fusible_principal_ok s_tension_batterie_basse -> diag_batterie_hs ;
+elec_hs s_fusible_principal_ok s_tension_batterie_ok -> diag_faisceau_coupe_ou_neiman ;
+
+# Branche Elec Base OK -> Comportement Demarreur
+elec_base_ok s_action_de_demarrer s_clac_clac_relais -> demarreur_faible ;
+elec_base_ok s_action_de_demarrer s_demarreur_tourne_franchement -> demarreur_ok ;
+elec_base_ok s_action_de_demarrer s_demarreur_lent -> demarreur_faible ;
+elec_base_ok s_action_de_demarrer s_rien_du_tout -> secu_active_ou_commodo ;
+
+# Sous-branche Securite / Relais silencieux (rien ne se passe)
+secu_active_ou_commodo s_coupe_circuit_on -> diag_erreur_coupe_circuit ;
+secu_active_ou_commodo s_coupe_circuit_off s_vitesse_engagee s_bequille_deployee -> diag_erreur_bequille_vitesse ;
+secu_active_ou_commodo s_coupe_circuit_off s_au_point_mort s_commodo_sale_ou_dur -> diag_commodo_demarrage_encrasse ;
+secu_active_ou_commodo s_coupe_circuit_off s_au_point_mort s_commodo_propre -> diag_relais_demarreur_hs ;
+
+# Sous-branche Demarreur Faible
+demarreur_faible s_phare_faiblit_pendant_action -> diag_batterie_dechargee_ou_sulfatee ;
+demarreur_faible s_phare_ne_faiblit_pas -> diag_charbons_demarreur_hs ;
+
+# Sous-branche Demarreur OK (Moteur entraine mais ne demarre pas)
+demarreur_ok s_bruit_pompe_essence_zzz -> essence_arrive ;
+demarreur_ok s_pas_de_bruit_pompe -> diag_pompe_injection_hs ;
+
+# Sous-branche Essence Arrive
+essence_arrive s_odeur_essence_echappement -> moteur_noye_ou_allumage ;
+essence_arrive s_pas_odeur_essence_echappement s_essence_dans_reservoir -> diag_filtre_essence_colmate ;
+
+moteur_noye_ou_allumage s_bougies_anciennes_ou_encrassees -> diag_bougies_hs ;
+moteur_noye_ou_allumage s_bougies_recentes_et_propres -> diag_bobines_allumage_hs ;
+
+
+######################################################################
+# ARBRE 2 : COMPORTEMENT MOTEUR EN ROULANT
+######################################################################
+
+s_pb_moteur_roulant s_bruit_moteur_anormal -> pb_bruit_moteur ;
+s_pb_moteur_roulant s_perte_puissance_ou_accoups -> pb_puissance ;
+s_pb_moteur_roulant s_surchauffe_moteur -> pb_surchauffe ;
+s_pb_moteur_roulant s_calage_ralenti -> pb_ralenti ;
+
+# Sous-branche Bruit Anormal
+pb_bruit_moteur s_cliquetis_metallique_haut s_bruit_surtout_a_froid -> diag_tendeur_chaine_distribution ;
+pb_bruit_moteur s_sifflement_aigu s_bruit_surtout_acceleration -> diag_roulement_boite_ou_embrayage ;
+pb_bruit_moteur s_claquement_sourd_bas_moteur s_variation_bruit_embrayage -> diag_cloche_embrayage_marquee ;
+
+# Sous-branche Perte Puissance
+pb_puissance s_accoups_constants s_ralenti_instable -> diag_capteur_tps_defaillant ;
+pb_puissance s_coupures_aleatoires_haut_regime s_plein_recent -> diag_eau_dans_essence ;
+pb_puissance s_coupures_aleatoires_haut_regime s_essence_ancienne -> diag_filtre_pompe_bouche ;
+
+# Sous-branche Ralenti
+pb_ralenti s_ralenti_oscille -> diag_moteur_pas_a_pas_encrasse ;
+pb_ralenti s_calage_au_retrogradage -> diag_ecu_mapping_ou_tps ;
+
+# Sous-branche Surchauffe
+pb_surchauffe s_ventilateur_ne_declenche_pas -> relais_ou_sonde_ventilo ;
+pb_surchauffe s_ventilateur_declenche s_liquide_refroidissement_bas -> diag_fuite_liquide_refroidissement ;
+pb_surchauffe s_ventilateur_declenche s_liquide_refroidissement_ok -> diag_pompe_a_eau_ou_calorstat_bloque ;
+
+relais_ou_sonde_ventilo s_fusible_ventilo_hs -> diag_fusible_ventilo ;
+relais_ou_sonde_ventilo s_fusible_ventilo_ok -> diag_relais_ou_sonde_temperature ;
+
+
+######################################################################
+# ARBRE 3 : CHASSIS, PARTIE-CYCLE ET FREINAGE
+######################################################################
+
+s_pb_partie_cycle s_pb_freinage -> pb_freins ;
+s_pb_partie_cycle s_pb_tenue_de_route -> pb_tenue_de_route ;
+s_pb_partie_cycle s_bruit_roulant -> pb_bruit_cycle ;
+
+# Sous-branche Freins
+pb_freins s_levier_mou_ou_elastique -> frein_mou ;
+pb_freins s_freinage_saccade s_vibration_levier -> diag_disques_voiles_ou_plaquettes_glacees ;
+pb_freins s_bruit_strident_freinage -> diag_plaquettes_usees_metal ;
+
+frein_mou s_liquide_frein_ok -> diag_purge_frein_necessaire ;
+frein_mou s_liquide_frein_bas s_pas_de_fuite_visible -> diag_plaquettes_tres_usees ;
+frein_mou s_liquide_frein_bas s_fuite_visible_etrier -> diag_joints_etrier_hs ;
+
+# Sous-branche Tenue de route
+pb_tenue_de_route s_guidonnage_haute_vitesse s_pression_pneus_ok -> diag_equilibrage_roue_ou_suspension ;
+pb_tenue_de_route s_guidonnage_haute_vitesse s_pression_pneus_basse -> diag_pression_pneus_defaut ;
+pb_tenue_de_route s_louvoiement_en_courbe s_suspension_pompe -> diag_amortisseur_arriere_fatigue ;
+
+# Sous-branche Bruit roulant
+pb_bruit_cycle s_claquement_passage_bosse_ou_freinage -> diag_roulement_direction_hs_ou_desserre ;
+pb_bruit_cycle s_bruit_frottement_roue_continu -> diag_roulement_roue_grogne ;
+pb_bruit_cycle s_craquement_kit_chaine s_point_dur_chaine -> diag_kit_chaine_hs ;
+
+
+######################################################################
+# ARBRE 4 : PANNES SPECIFIQUES PAR MOTO / PLATEFORME
+# Ces regles s'activent de maniere ciblée.
+######################################################################
+
+# Spécifique CP2
+plateforme_cp2 s_pb_moteur_roulant pb_bruit_moteur s_cliquetis_metallique_haut s_bruit_surtout_a_froid -> diag_cct_cp2 ;
+moto_mt07 s_pb_partie_cycle pb_tenue_de_route s_louvoiement_en_courbe s_suspension_pompe -> diag_amortisseur_arriere_mt07 ;
+moto_tracer700 s_bruit_aerodynamique_vibration -> diag_bulle_vibration_tracer700 ;
+moto_tenere700 s_rayon_roue_casse_ou_rouille -> diag_rayons_oxydes_t7 ;
+
+# Spécifique CP3
+plateforme_cp3 gen_847 s_pb_moteur_roulant pb_bruit_moteur s_cliquetis_metallique_haut s_bruit_surtout_a_froid -> diag_cct_cp3_847 ;
+plateforme_cp3 gen_847 s_selecteur_vitesse_bloque -> diag_ressort_selecteur_cp3 ;
+plateforme_cp3 gen_890 s_pb_moteur_roulant pb_ralenti s_calage_au_retrogradage -> diag_ecu_bug_890_retrogradage ;
+moto_tracer900 s_pb_partie_cycle pb_tenue_de_route s_guidonnage_haute_vitesse s_top_case_installe -> diag_aerodynamisme_tracer900_bagagerie ;
+
+# Spécifique CP4
+plateforme_cp4 gen_5vy s_pb_moteur_roulant pb_bruit_moteur s_bruit_grave_droit -> diag_rotor_alternateur_decolle_5vy ;
+plateforme_cp4 gen_14b s_pb_demarrage elec_base_ok s_action_de_demarrer s_demarreur_lent s_moteur_chaud_uniquement -> diag_demarreur_chaud_cp4 ;
+plateforme_cp4 gen_2ks s_pb_partie_cycle s_erreur_abs_tableau_bord -> diag_capteur_abs_imu_cp4 ;

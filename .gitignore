@@ -1,0 +1,4 @@
+obj/
+yamaha_diag
+*.o
+*.DS_Store

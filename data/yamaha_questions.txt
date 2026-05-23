@@ -1,0 +1,106 @@
+# Dictionnaire de questions pour diagnostic Yamaha
+
+# === DEMARRAGE ===
+s_pb_demarrage|Avez-vous un probleme pour demarrer la moto (le moteur ne se lance pas ou cale tout de suite) ?
+s_contact_mis|Quand vous tournez la cle sur ON, mettez-vous bien le contact ?
+s_tableau_allume|Le tableau de bord (ecran TFT/LCD) s'allume-t-il normalement avec sa sequence habituelle ?
+s_tableau_eteint|Le tableau de bord reste-t-il completement eteint (ecran noir, aucun voyant) ?
+s_fusible_principal_hs|Le fusible principal (30A/50A, pres de la batterie) est-il grille ?
+s_fusible_principal_ok|Le fusible principal est-il intact ?
+s_tension_batterie_basse|La tension de la batterie est-elle inferieure a 12V ?
+s_tension_batterie_ok|La batterie affiche-t-elle plus de 12.3V au repos ?
+
+s_action_de_demarrer|Avez-vous essaye de demarrer la moto en appuyant sur le bouton de demarreur ?
+s_clac_clac_relais|Entendez-vous seulement un rapide 'clac-clac-clac' sous la selle sans que le moteur ne tourne ?
+s_demarreur_tourne_franchement|Le demarreur entraine-t-il le moteur avec une vitesse de rotation normale et franche ?
+s_demarreur_lent|Le demarreur tourne-t-il, mais a-t-il l'air de forcer (rotation tres lente et difficile) ?
+s_rien_du_tout|Ne se passe-t-il absolument rien quand vous appuyez sur le demarreur (aucun bruit, aucun mouvement) ?
+
+s_coupe_circuit_on|Le bouton coupe-circuit rouge au guidon (bouton d'arret d'urgence) est-il enclenche sur OFF/Coupure ?
+s_coupe_circuit_off|Le bouton coupe-circuit rouge (Run/Stop) est-il bien sur la position de marche (Run) ?
+s_vitesse_engagee|Une vitesse est-elle engagee (la moto n'est pas au point mort, pas de voyant N vert) ?
+s_bequille_deployee|La bequille laterale est-elle deployee (meme partiellement) ?
+s_au_point_mort|La moto est-elle bien au point mort (voyant N vert allume au tableau de bord) ?
+s_commodo_sale_ou_dur|Le bouton de demarrage semble-t-il coince, dur, ou encrasse (le contact electrique ne se fait pas) ?
+s_commodo_propre|Le bouton de demarrage a-t-il une course completement fluide et sans point dur ?
+
+s_phare_faiblit_pendant_action|Pendant que vous maintenez le bouton de demarreur enfonce, l'intensite du phare baisse-t-elle fortement ?
+s_phare_ne_faiblit_pas|Le phare reste-t-il bien allume au meme niveau d'intensite quand vous sollicitez le demarreur ?
+
+s_bruit_pompe_essence_zzz|En mettant le contact, entendez-vous un sifflement 'Zzzz...' de 2 secondes (amorcage de la pompe) ?
+s_pas_de_bruit_pompe|N'y a-t-il absolument aucun bruit de pompe a essence depuis le reservoir lors de la mise sous contact ?
+
+s_odeur_essence_echappement|Apres avoir insiste sur le demarreur pour essayer de la lancer, sentez-vous une forte odeur d'essence a l'echappement ?
+s_pas_odeur_essence_echappement|N'y a-t-il aucune odeur d'essence meme apres plusieurs essais prolonges du demarreur ?
+s_essence_dans_reservoir|Etes-vous certain qu'il y a suffisament d'essence dans le reservoir (pas de colmatage par fond de cuve) ?
+
+s_bougies_anciennes_ou_encrassees|Les bougies d'allumage sont-elles particulierement vieilles (> 20 000 km) ou encrassees ?
+s_bougies_recentes_et_propres|Les bougies d'allumage sont-elles recentes et en excellent etat ?
+
+
+# === COMPORTEMENT MOTEUR ROULANT ===
+s_pb_moteur_roulant|Le probleme survient-il lorsque le moteur tourne ?
+s_bruit_moteur_anormal|Entendez-vous un bruit moteur totalement anormal (claquement, sifflement, frottement interne) ?
+s_perte_puissance_ou_accoups|Ressentez-vous une perte de puissance ou des a-coups a l'acceleration ?
+s_surchauffe_moteur|Le moteur chauffe-t-il anormalement (voyant temperature rouge allume ou jauge au maximum critique) ?
+s_calage_ralenti|Le moteur cale-t-il ou a-t-il du mal a tenir le ralenti ?
+
+s_cliquetis_metallique_haut|S'agit-il d'un cliquetis/tic-tic metallique rapide, localise en haut ou a droite du moteur (chaine de distribution) ?
+s_bruit_surtout_a_froid|Ce bruit de cliquetis est-il tres present au demarrage a froid, puis disparait-t-il progressivement a chaud ?
+s_sifflement_aigu|Entendez-vous un sifflement aigu constant (style compresseur) provenant du compartiment transmission ?
+s_bruit_surtout_acceleration|Ce sifflement augmente-t-il nettement en frequence proportionnellement a l'acceleration ou la vitesse ?
+s_claquement_sourd_bas_moteur|Entendez-vous un bruit de grognement sourd, de casserole lourd qui vient du bas moteur droit ?
+s_variation_bruit_embrayage|Ce bruit de casserole change-t-il ou s'attenue-t-il quand vous tirez le levier d'embrayage au point mort ?
+
+s_accoups_constants|Ces a-coups d'injection sont-ils constants et erratiques, specialement sur un filet de gaz a bas regime ?
+s_ralenti_instable|Ces a-coups s'accompagnent-t-ils d'un ralenti instable ou calage, independament du carburant ?
+s_coupures_aleatoires_haut_regime|Avez-vous des coupures moteur nettes mais aleatoires, surtout lors de fortes charges/accelerations (le moteur s'etouffe) ?
+s_plein_recent|Le probleme est-il apparu subitement juste apres avoir fait un plein de carburant ?
+s_essence_ancienne|La moto a-t-elle ete longtemps inactive ou faites-vous vos pleins dans des stations artisanales ?
+
+s_ralenti_oscille|Le ralenti moteur fait-il le 'yoyo' regulierement et constamment de haut en bas sans jamais se stabiliser ?
+s_calage_au_retrogradage|Le moteur coupe-t-il brusquement exactement a l'instant ou vous retrogradez et fermez completement les gaz ?
+
+s_ventilateur_ne_declenche_pas|Alors que la moto affiche > 105 degC de temperature moteur, le ventilateur du radiateur reste-t-il etrangement immobile ?
+s_ventilateur_declenche|Le ventilateur du radiateur se declenche-t-il bien bruyamment comme il se doit au dela de 105 degC ?
+s_liquide_refroidissement_bas|Le niveau de liquide de refroidissement est-il tres bas (sous le MIN du vase d'expansion) ?
+s_liquide_refroidissement_ok|Le niveau de liquide de refroidissement est-il bon (verifie via le bouchon de remplissage du radiateur lui-meme) ?
+s_fusible_ventilo_hs|Le fusible dedie au ventilateur de radiateur est-il grille ?
+s_fusible_ventilo_ok|Le fusible dedie au ventilateur de refroidissement est-il sain et conducteur ?
+
+
+# === CHASSIS & PARTIE-CYCLE ===
+s_pb_partie_cycle|Le probleme est-il lie au chassis, au freinage ou a un bruit de roulement ?
+s_pb_freinage|Avez-vous d'abord un probleme lie specifiquement au freinage (mordant, feeling levier, vibrations, fuite) ?
+s_pb_tenue_de_route|Ressentez-vous imperativement un probleme de tenue de route (louvoiement, guidonnage, desequilibre, pompage) ?
+s_bruit_roulant|Entendez-vous un bruit de mecanique externe specifique (frottement, claquement) lie a la rotation de la roue ou amortissement ?
+
+s_levier_mou_ou_elastique|En actionnant le frein avant, le levier est-il mou, spongieux (il va presque jusqu'a la poignee sans bloquer) ?
+s_freinage_saccade|Le freinage est-il tres irregulier, avec des saccades ou d'enormes a-coups synchronises avec la vitesse de rotation de la roue ?
+s_vibration_levier|Ressentez-vous des vibrations directement desagreables qui remontent vers vous dans le levier de frein a haute vitesse ?
+s_bruit_strident_freinage|Y a-t-il un horrible bruit metallique strident ("ferraille contre ferraille") quand vous serrez fort les freins ?
+
+s_liquide_frein_ok|Le niveau du liquide dans le bocal maitre-cylindre de frein (au guidon) est-il suffisant apres decantation ?
+s_liquide_frein_bas|Le niveau du bocal de maitre-cylindre est-il visiblement au niveau 'LOWER' (Bas) ou vide / durite aspire de l'air ?
+s_pas_de_fuite_visible|Les pistons d'etrier sont-ils fortement sortis sans trace de fuite de liquide ?
+s_fuite_visible_etrier|Voyez-vous distinctement du fluide gras epanche et de la poussiere colle autour des joints d'une durite aviation/etrier ?
+
+s_guidonnage_haute_vitesse|La tete de fourche ou le guidon se met-il a battre/trembler dangeureusement de gauche a droite a haute vitesse (> 130 km/h) ?
+s_pression_pneus_ok|La pression des deux pneus est-elle correcte selon les preconisations Yamaha ?
+s_pression_pneus_basse|L'un de vos deux pneus est-il franchement degonfle ou en crevaison lente par rapport aux preconisations ?
+s_louvoiement_en_courbe|L'arriere de la moto a-t-il tendance a osciller mollement ("louvoyer") ou saucissonner quand vous etes en longue courbe rapide ?
+s_suspension_pompe|Si vous appuyez ardemment sur l'arriere a l'arret puis relachez, la moto remonte-t-elle puis redescend comme une balancoire sans etre freinee (pompage hydraulique decede) ?
+
+s_claquement_passage_bosse_ou_freinage|Entendez-vous un GROS 'clonk' dans la colonne de direction lors d'un freinage fort ou d'un dos-d'ane ?
+s_bruit_frottement_roue_continu|Y a-t-il un 'woum-woum-woum' continu provenant d'un axe de roue, lie de fait a votre vitesse meme moteur coupe ?
+s_craquement_kit_chaine|Remarquez-vous un bruit "clac-clac" provenant du bas-gauche au rythme de la transmission secondaire, surtout flagrant a bassse vitesse urbaine ?
+s_point_dur_chaine|La chaine a-t-elle un point dur (bloquage sur certains angles) lors d'une rotation roue arriere soulevee ?
+
+# === SPECIFIQUES PLATEFORME ===
+s_bruit_grave_droit|Est-ce specifiquement un enorme vacarme/fracas metallique TRES GRAVE cote DROIT (vers carter d'alternateur) ?
+s_moteur_chaud_uniquement|Le demarreur peine-t-il uniquement quand le moteur est chaud, mais fonctionne bien a froid ?
+s_erreur_abs_tableau_bord|La moto affiche-t-elle une alerte de systeme freinage ou controle de traction (voyant Engine Check, defauts capteurs de roues ou bloc ABS complet debranche) ?
+s_selecteur_vitesse_bloque|Le selecteur de vitesse est-il mou ou bloque, au point que les rapports ne s'engagent plus ?
+s_top_case_installe|Pilotez-vous avec un lourd Top-Case aero installe a l'arriere ?
+s_bruit_aerodynamique_vibration|Une sorte de "brrrrrr", vibration aerodynamique epouvantable issue des carenages avants/de la bulle vers 4000-5000 tr/min est-elle insoutenable ?
+s_rayon_roue_casse_ou_rouille|Les rayons de la jante sont-ils rouilles ou casses ?
