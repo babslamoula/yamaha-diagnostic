@@ -1,0 +1,1 @@
+{"nodes": [{"id": "include_fichiers_h", "label": "fichiers.h", "file_type": "code", "source_file": "include/fichiers.h", "source_location": "L1"}], "edges": [{"source": "include_fichiers_h", "target": "structures", "relation": "imports", "confidence": "EXTRACTED", "source_file": "include/fichiers.h", "source_location": "L9", "weight": 1.0}], "raw_calls": []}

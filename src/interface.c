@@ -5,20 +5,24 @@
 #include <string.h>
 #include <dirent.h>
 #include "interface.h"
+#include "solutions.h"
+#include "base_faits.h"
+#include "util.h"
 
 void effacer_ecran(void)
 {
-#ifdef _WIN32
-    system("cls");
-#else
-    system("clear");
-#endif
+    /* Sequence ANSI : pas de dependance a $PATH, pas de fork.
+     * Remplace les anciens system("cls"/"clear") (audit P2 #12). */
+    printf("\033[H\033[2J");
+    fflush(stdout);
 }
 
 void pause_ecran(void)
 {
+    if (feof(stdin))
+        return;
     printf("\n  Appuyez sur Entree pour continuer...");
-    while (getchar() != '\n');
+    vider_stdin();
 }
 
 void afficher_banniere(void)
@@ -69,10 +73,10 @@ int menu_principal(void)
     printf("\n  Votre choix : ");
 
     if (scanf("%d", &choix) != 1) {
-        while (getchar() != '\n');
+        vider_stdin();
         return -1;
     }
-    while (getchar() != '\n');
+    vider_stdin();
 
     return choix;
 }
@@ -93,10 +97,10 @@ int menu_gestion_regles(void)
     printf("\n  Votre choix : ");
 
     if (scanf("%d", &choix) != 1) {
-        while (getchar() != '\n');
+        vider_stdin();
         return -1;
     }
-    while (getchar() != '\n');
+    vider_stdin();
     return choix;
 }
 
@@ -117,10 +121,10 @@ int menu_gestion_faits(void)
     printf("\n  Votre choix : ");
 
     if (scanf("%d", &choix) != 1) {
-        while (getchar() != '\n');
+        vider_stdin();
         return -1;
     }
-    while (getchar() != '\n');
+    vider_stdin();
     return choix;
 }
 
@@ -149,7 +153,10 @@ void selectionner_fichier_dossier(char *buffer, int taille, const char *dossier)
         
         while ((dir = readdir(d)) != NULL) {
             size_t len = strlen(dir->d_name);
-            /* Filtrer les fichiers se terminant par .txt */
+            /* Filtrer les fichiers se terminant par .txt, et ignorer les
+             * fichiers caches macOS (.DS_Store, ._*) (audit P2 #11). */
+            if (dir->d_name[0] == '.')
+                continue;
             if (len > 4 && strcmp(dir->d_name + len - 4, ".txt") == 0) {
                 if (nb_fichiers < 50) {
                     strncpy(fichiers[nb_fichiers], dir->d_name, 255);
@@ -169,9 +176,11 @@ void selectionner_fichier_dossier(char *buffer, int taille, const char *dossier)
                 for (j = 0; j < nb_fichiers - i - 1; j++) {
                     if (strcmp(fichiers[j], fichiers[j+1]) > 0) {
                         char temp[256];
-                        strcpy(temp, fichiers[j]);
-                        strcpy(fichiers[j], fichiers[j+1]);
-                        strcpy(fichiers[j+1], temp);
+                        /* strncpy + terminaison explicite -> jamais d'overflow
+                         * meme si readdir donne un nom long (audit P2 #11). */
+                        memcpy(temp, fichiers[j], sizeof(temp));
+                        memcpy(fichiers[j], fichiers[j+1], sizeof(temp));
+                        memcpy(fichiers[j+1], temp, sizeof(temp));
                     }
                 }
             }
@@ -188,11 +197,11 @@ void selectionner_fichier_dossier(char *buffer, int taille, const char *dossier)
     printf("\n  Votre choix : ");
 
     if (scanf("%d", &choix) != 1) {
-        while (getchar() != '\n');
+        vider_stdin();
         buffer[0] = '\0';
         return;
     }
-    while (getchar() != '\n');
+    vider_stdin();
 
     if (choix > 0 && choix <= nb_fichiers) {
         snprintf(buffer, taille, "%s/%s", dossier, fichiers[choix - 1]);
@@ -240,10 +249,10 @@ int menu_selection_modele(void)
     printf("\n  Votre moto : ");
 
     if (scanf("%d", &choix) != 1) {
-        while (getchar() != '\n');
+        vider_stdin();
         return 0;
     }
-    while (getchar() != '\n');
+    vider_stdin();
 
     return choix;
 }
@@ -286,10 +295,336 @@ int menu_selection_annee(int modele)
     printf("\n  Votre choix : ");
 
     if (scanf("%d", &choix) != 1) {
-        while (getchar() != '\n');
+        vider_stdin();
         return 0;
     }
-    while (getchar() != '\n');
+    vider_stdin();
 
     return choix;
+}
+
+/* ================================================================== */
+/*  MENU CHAINAGE ARRIERE                                              */
+/* ================================================================== */
+
+/* Deux niveaux :
+ *   1) Choisir une categorie de panne
+ *   2) Choisir la panne dans la categorie
+ * Remplit 'but' avec le diagnostic selectionne.
+ * Retourne 1 si selection valide, 0 si annule. */
+
+#define MENU_MAX_CAT    12
+#define MENU_MAX_PANNE  60
+
+int menu_chainage_arriere(const BaseSolutions *bs, char *but, int taille_but)
+{
+    const Solution *tableau[MENU_MAX_PANNE];
+    int nb_total = 0;
+    const Solution *s;
+    char categories[MENU_MAX_CAT][128];
+    int nb_cat = 0;
+    int i, j, choix;
+
+    if (bs == NULL || but == NULL) return 0;
+    but[0] = '\0';
+
+    /* Collecter toutes les solutions dans un tableau.
+     * La liste est en LIFO (prepend), on l'inverse pour retrouver l'ordre fichier. */
+    s = bs->solutions;
+    while (s != NULL && nb_total < MENU_MAX_PANNE) {
+        tableau[nb_total++] = s;
+        s = s->suivant;
+    }
+    for (i = 0; i < nb_total / 2; i++) {
+        const Solution *tmp = tableau[i];
+        tableau[i] = tableau[nb_total - 1 - i];
+        tableau[nb_total - 1 - i] = tmp;
+    }
+
+    /* Collecter les categories uniques dans l'ordre d'apparition */
+    for (i = 0; i < nb_total; i++) {
+        int deja = 0;
+        if (tableau[i]->categorie[0] == '\0') continue;
+        for (j = 0; j < nb_cat; j++) {
+            if (strcmp(categories[j], tableau[i]->categorie) == 0) {
+                deja = 1; break;
+            }
+        }
+        if (!deja && nb_cat < MENU_MAX_CAT) {
+            strncpy(categories[nb_cat], tableau[i]->categorie, 127);
+            categories[nb_cat][127] = '\0';
+            nb_cat++;
+        }
+    }
+
+    if (nb_cat == 0) {
+        printf("\n  [!] Aucune panne disponible dans la base de solutions.\n");
+        return 0;
+    }
+
+    /* -------- Menu niveau 1 : categories -------- */
+    /* Boite interieure : 49 caracteres (identique aux autres menus) */
+    do {
+        effacer_ecran();
+        printf("\n");
+        printf("  ┌─────────────────────────────────────────────────┐\n");
+        printf("  │    CHAINAGE ARRIERE - Choisir une categorie     │\n");
+        printf("  ├─────────────────────────────────────────────────┤\n");
+        printf("  │                                                 │\n");
+        for (i = 0; i < nb_cat; i++) {
+            /* %-43.43s : 2 + 2 + 2 + 43 = 49 chars interieurs */
+            printf("  │  %2d. %-43.43s│\n", i + 1, categories[i]);
+        }
+        printf("  │                                                 │\n");
+        printf("  │   0. Annuler                                    │\n");
+        printf("  └─────────────────────────────────────────────────┘\n");
+        printf("\n  Votre choix : ");
+
+        if (scanf("%d", &choix) != 1) {
+            vider_stdin();
+            choix = -1;
+        } else {
+            vider_stdin();
+        }
+        if (choix < 0 || choix > nb_cat)
+            printf("\n  [!] Choix invalide.\n");
+
+    } while (choix < 0 || choix > nb_cat);
+
+    if (choix == 0) return 0;
+
+    /* -------- Menu niveau 2 : pannes de la categorie -------- */
+    /* Boite interieure : 63 caracteres (boite plus large pour les noms) */
+    {
+        const char *cat_choisie = categories[choix - 1];
+        const Solution *pannes[MENU_MAX_PANNE];
+        int nb_pannes = 0;
+
+        for (i = 0; i < nb_total; i++) {
+            if (strcmp(tableau[i]->categorie, cat_choisie) == 0 &&
+                nb_pannes < MENU_MAX_PANNE) {
+                pannes[nb_pannes++] = tableau[i];
+            }
+        }
+
+        do {
+            effacer_ecran();
+            printf("\n");
+            printf("  ┌───────────────────────────────────────────────────────────────┐\n");
+            /* Titre = categorie choisie, 63 chars interieurs : 2 + 61 */
+            printf("  │  %-61.61s│\n", cat_choisie);
+            printf("  ├───────────────────────────────────────────────────────────────┤\n");
+            printf("  │                                                               │\n");
+            for (i = 0; i < nb_pannes; i++) {
+                /* %-57.57s : 2 + 2 + 2 + 57 = 63 chars interieurs */
+                printf("  │  %2d. %-57.57s│\n", i + 1, pannes[i]->nom);
+            }
+            printf("  │                                                               │\n");
+            printf("  │   0. Retour                                                   │\n");
+            printf("  └───────────────────────────────────────────────────────────────┘\n");
+            printf("\n  Votre choix : ");
+
+            if (scanf("%d", &choix) != 1) {
+                vider_stdin();
+                choix = -1;
+            } else {
+                vider_stdin();
+            }
+            if (choix < 0 || choix > nb_pannes)
+                printf("\n  [!] Choix invalide.\n");
+
+        } while (choix < 0 || choix > nb_pannes);
+
+        if (choix == 0) return 0;
+
+        strncpy(but, pannes[choix - 1]->diagnostic, taille_but - 1);
+        but[taille_but - 1] = '\0';
+        return 1;
+    }
+}
+
+/* ================================================================== */
+/*  SAISIE DES SYMPTOMES (pour chainage avant)                        */
+/* ================================================================== */
+
+/* Affiche les questions d'une categorie une par une (oui/non).
+ * Ajoute les litteraux confirmes dans bf. Retourne nb ajoutes. */
+static int poser_questions_categorie(const Question * const *tableau,
+                                     int nb_total,
+                                     const char *categorie,
+                                     BaseFaits *bf)
+{
+    char invite[512];
+    int i;
+    int nb_ajoutes = 0;
+    int nb_questions = 0;
+
+    /* Compter les questions de la categorie */
+    for (i = 0; i < nb_total; i++) {
+        if (strcmp(tableau[i]->categorie, categorie) == 0)
+            nb_questions++;
+    }
+
+    effacer_ecran();
+    printf("\n");
+    printf("  ===  %s  ===\n", categorie);
+    printf("  (%d question(s)) - Repondez par 'oui' ou 'non'\n\n", nb_questions);
+
+    for (i = 0; i < nb_total; i++) {
+        if (strcmp(tableau[i]->categorie, categorie) == 0) {
+            int rep;
+            snprintf(invite, sizeof(invite),
+                     "  > %s\n    (oui/non) : ", tableau[i]->description);
+            rep = lire_oui_non(invite);
+            if (rep == 1) {
+                if (ajouter_fait(bf, tableau[i]->litteral))
+                    nb_ajoutes++;
+            }
+            printf("\n");
+        }
+    }
+
+    printf("  --- %d symptome(s) saisi(s) pour cette categorie. ---\n", nb_ajoutes);
+    pause_ecran();
+    return nb_ajoutes;
+}
+
+#define SYM_MAX_CAT   8
+#define SYM_MAX_Q   120
+
+int menu_saisie_symptomes(const BaseSolutions *bs, BaseFaits *bf)
+{
+    const Question *tableau[SYM_MAX_Q];
+    int nb_total = 0;
+    const Question *q;
+    char categories[SYM_MAX_CAT][128];
+    int nb_cat = 0;
+    int i, j, choix;
+    int nb_ajoutes_total = 0;
+
+    if (bs == NULL || bf == NULL) return 0;
+
+    /* Collecter les questions en ordre fichier (liste LIFO -> inverser) */
+    q = bs->questions;
+    while (q != NULL && nb_total < SYM_MAX_Q) {
+        tableau[nb_total++] = q;
+        q = q->suivant;
+    }
+    for (i = 0; i < nb_total / 2; i++) {
+        const Question *tmp = tableau[i];
+        tableau[i] = tableau[nb_total - 1 - i];
+        tableau[nb_total - 1 - i] = tmp;
+    }
+
+    /* Collecter les categories uniques dans l'ordre d'apparition */
+    for (i = 0; i < nb_total; i++) {
+        int deja = 0;
+        if (tableau[i]->categorie[0] == '\0') continue;
+        for (j = 0; j < nb_cat; j++) {
+            if (strcmp(categories[j], tableau[i]->categorie) == 0) {
+                deja = 1; break;
+            }
+        }
+        if (!deja && nb_cat < SYM_MAX_CAT) {
+            strncpy(categories[nb_cat], tableau[i]->categorie, 127);
+            categories[nb_cat][127] = '\0';
+            nb_cat++;
+        }
+    }
+
+    if (nb_cat == 0) {
+        printf("\n  [!] Aucune question disponible.\n");
+        return 0;
+    }
+
+    /* Boucle : menu categories -> questions -> retour au menu */
+    do {
+        effacer_ecran();
+        printf("\n");
+        printf("  ┌─────────────────────────────────────────────────┐\n");
+        printf("  │    CHAINAGE AVANT - Saisie des symptomes        │\n");
+        printf("  ├─────────────────────────────────────────────────┤\n");
+        printf("  │  Choisissez une categorie et repondez           │\n");
+        printf("  │  aux questions. Revenez ici pour en choisir     │\n");
+        printf("  │  une autre, ou tapez 0 pour lancer.             │\n");
+        printf("  │                                                 │\n");
+        for (i = 0; i < nb_cat; i++) {
+            printf("  │  %2d. %-43.43s│\n", i + 1, categories[i]);
+        }
+        printf("  │                                                 │\n");
+        printf("  │   0. Lancer le diagnostic                       │\n");
+        printf("  └─────────────────────────────────────────────────┘\n");
+        printf("\n  Votre choix : ");
+
+        if (scanf("%d", &choix) != 1) {
+            vider_stdin();
+            choix = -1;
+        } else {
+            vider_stdin();
+        }
+
+        if (choix > 0 && choix <= nb_cat) {
+            nb_ajoutes_total += poser_questions_categorie(
+                tableau, nb_total, categories[choix - 1], bf);
+        } else if (choix != 0) {
+            printf("\n  [!] Choix invalide.\n");
+        }
+
+    } while (choix != 0);
+
+    return nb_ajoutes_total;
+}
+
+/* ================================================================== */
+/*  AFFICHAGE DES DIAGNOSTICS DEDUITS (chainage avant)                */
+/* ================================================================== */
+
+void afficher_diagnostics_chaines(const BaseFaits *bf_avant,
+                                   const BaseFaits *bf_apres,
+                                   const BaseSolutions *bs)
+{
+    const Fait *f;
+    int nb_diag = 0;
+
+    printf("\n");
+    printf("  ┌─────────────────────────────────────────────────┐\n");
+    printf("  │    RESULTATS DU CHAINAGE AVANT                  │\n");
+    printf("  └─────────────────────────────────────────────────┘\n\n");
+
+    if (bf_apres == NULL) {
+        printf("  Aucun resultat.\n");
+        return;
+    }
+
+    f = bf_apres->faits;
+    while (f != NULL) {
+        /* N'afficher que les conclusions diag_* nouvellement deduites */
+        if (strncmp(f->nom, "diag_", 5) == 0) {
+            int nouveau = (bf_avant == NULL) || !fait_existe(bf_avant, f->nom);
+            if (nouveau) {
+                const Solution *sol = trouver_solution(bs, f->nom);
+                nb_diag++;
+                printf("  [%d] ", nb_diag);
+                if (sol) {
+                    printf("%s\n", sol->nom);
+                    printf("      Categorie : %s\n", sol->categorie);
+                    printf("      Cout estime : %s EUR\n", sol->cout);
+                } else {
+                    printf("%s\n", f->nom);
+                }
+                printf("\n");
+            }
+        }
+        f = f->suivant;
+    }
+
+    printf("  ─────────────────────────────────────────────────\n");
+    if (nb_diag == 0) {
+        printf("  Aucune panne identifiee avec ces symptomes.\n");
+        printf("  Essayez d'ajouter d'autres symptomes ou\n");
+        printf("  consultez le diagnostic Akinator (option 1).\n");
+    } else {
+        printf("  %d panne(s) identifiee(s) par chainage avant.\n", nb_diag);
+    }
+    printf("\n");
 }

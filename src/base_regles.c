@@ -4,6 +4,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include "base_regles.h"
+#include "solutions.h"
+#include "util.h"
 
 void init_base_regles(BaseRegles *br)
 {
@@ -130,18 +132,18 @@ Regle *creer_regle_interactive(void)
     if (scanf("%d", &nb) != 1 || nb < 1 || nb > MAX_HYPOTHESES) {
         printf("  Nombre invalide.\n");
         liberer_regle(r);
-        while (getchar() != '\n');
+        vider_stdin();
         return NULL;
     }
-    while (getchar() != '\n');
+    vider_stdin();
 
     for (i = 0; i < nb; i++) {
         printf("  Hypothese %d : ", i + 1);
-        if (scanf("%32s", buffer) != 1) {
+        if (scanf("%63s", buffer) != 1) {
             liberer_regle(r);
             return NULL;
         }
-        while (getchar() != '\n');
+        vider_stdin();
         if (!ajouter_hypothese(r, buffer)) {
             liberer_regle(r);
             return NULL;
@@ -149,15 +151,85 @@ Regle *creer_regle_interactive(void)
     }
 
     printf("  Conclusion : ");
-    if (scanf("%32s", buffer) != 1) {
+    if (scanf("%63s", buffer) != 1) {
         liberer_regle(r);
-        while (getchar() != '\n');
+        vider_stdin();
         return NULL;
     }
-    while (getchar() != '\n');
+    vider_stdin();
 
     strncpy(r->conclusion, buffer, MAX_NOM - 1);
     r->conclusion[MAX_NOM - 1] = '\0';
 
     return r;
+}
+
+/* ================================================================== */
+/*  VALIDATION DE LA BASE DE REGLES (audit P3 #19)                     */
+/* ================================================================== */
+
+/* Verifie : auto-reference (conclusion in hypotheses), cycle direct
+ * entre deux regles, litteral utilise sans question correspondante. */
+int valider_base_regles(const BaseRegles *br, const struct BaseSolutions *bs)
+{
+    int avertissements = 0;
+    const Regle *r;
+
+    if (br == NULL)
+        return 0;
+
+    for (r = br->regles; r != NULL; r = r->suivant) {
+        const Litteral *h;
+        const Regle *r2;
+
+        /* 1) auto-reference */
+        for (h = r->hypotheses; h != NULL; h = h->suivant) {
+            if (strcmp(h->nom, r->conclusion) == 0) {
+                fprintf(stderr, "  [WARN] auto-reference : '%s' apparait dans ses propres hypotheses.\n",
+                        r->conclusion);
+                avertissements++;
+                break;
+            }
+        }
+
+        /* 2) cycle direct A->B, B->A : on cherche une regle dont la conclusion
+         *    est une hypothese de r ET dont une hypothese est la conclusion de r */
+        for (h = r->hypotheses; h != NULL; h = h->suivant) {
+            for (r2 = br->regles; r2 != NULL; r2 = r2->suivant) {
+                if (r2 == r) continue;
+                if (strcmp(r2->conclusion, h->nom) == 0) {
+                    const Litteral *h2;
+                    for (h2 = r2->hypotheses; h2 != NULL; h2 = h2->suivant) {
+                        if (strcmp(h2->nom, r->conclusion) == 0) {
+                            fprintf(stderr,
+                                    "  [WARN] cycle direct : '%s' <-> '%s'.\n",
+                                    r->conclusion, r2->conclusion);
+                            avertissements++;
+                            goto next_hyp;
+                        }
+                    }
+                }
+            }
+next_hyp:   ;
+        }
+
+        /* 3) litteral non documente (uniquement pour les s_*) */
+        if (bs != NULL) {
+            for (h = r->hypotheses; h != NULL; h = h->suivant) {
+                if (strncmp(h->nom, "s_", 2) != 0)
+                    continue;
+                if (trouver_question(bs, h->nom) == NULL) {
+                    fprintf(stderr,
+                            "  [WARN] litteral sans question : '%s' (regle -> %s).\n",
+                            h->nom, r->conclusion);
+                    avertissements++;
+                }
+            }
+        }
+    }
+
+    if (avertissements > 0)
+        fprintf(stderr, "  [WARN] %d avertissement(s) sur la base de regles.\n",
+                avertissements);
+    return avertissements;
 }

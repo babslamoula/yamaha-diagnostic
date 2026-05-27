@@ -7,6 +7,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include "solutions.h"
+#include "util.h"
 
 void init_base_solutions(BaseSolutions *bs)
 {
@@ -16,20 +17,10 @@ void init_base_solutions(BaseSolutions *bs)
     bs->nb_questions = 0;
 }
 
-/* ------------------------------------------------------------------ */
-/*  Utilitaire : lire une ligne et decouper par '|'                    */
-/* ------------------------------------------------------------------ */
-static char *trim(char *str)
-{
-    char *end;
-    while (*str == ' ' || *str == '\t') str++;
-    if (*str == '\0') return str;
-    end = str + strlen(str) - 1;
-    while (end > str && (*end == ' ' || *end == '\t' || *end == '\n' || *end == '\r'))
-        end--;
-    *(end + 1) = '\0';
-    return str;
-}
+/* trim local etait duplique avec fichiers.c (audit P2 #13).
+ * On delegue a util_trim() pour eviter la divergence (l'ancien trim ici
+ * geriait \r alors que celui de fichiers.c ne le faisait pas). */
+#define trim(s) util_trim(s)
 
 /* ================================================================== */
 /*  CHARGEMENT DES SOLUTIONS                                           */
@@ -39,6 +30,7 @@ int charger_solutions(BaseSolutions *bs, const char *fichier)
 {
     FILE *fp;
     char ligne[1024];
+    char categorie_courante[128] = "";
     int nb = 0;
 
     if (bs == NULL || fichier == NULL) return 0;
@@ -53,9 +45,24 @@ int charger_solutions(BaseSolutions *bs, const char *fichier)
         char *diag, *nom, *desc, *sol, *cout;
         Solution *s;
 
-        /* Ignorer commentaires et lignes vides */
-        if (ligne[0] == '#' || ligne[0] == '\n' || ligne[0] == '\r')
+        /* Lignes vides */
+        if (ligne[0] == '\n' || ligne[0] == '\r')
             continue;
+
+        /* Commentaires : detecter les lignes de categorie (# NOM_CATEGORIE) */
+        if (ligne[0] == '#') {
+            char *cat = ligne + 1;
+            size_t l;
+            while (*cat == ' ') cat++;
+            l = strlen(cat);
+            while (l > 0 && (cat[l-1] == '\n' || cat[l-1] == '\r' || cat[l-1] == ' '))
+                cat[--l] = '\0';
+            if (l > 0) {
+                strncpy(categorie_courante, cat, 127);
+                categorie_courante[127] = '\0';
+            }
+            continue;
+        }
 
         diag = strtok(ligne, "|");
         nom  = strtok(NULL, "|");
@@ -71,6 +78,8 @@ int charger_solutions(BaseSolutions *bs, const char *fichier)
 
         strncpy(s->diagnostic, trim(diag), MAX_NOM - 1);
         s->diagnostic[MAX_NOM - 1] = '\0';
+        strncpy(s->categorie, categorie_courante, 127);
+        s->categorie[127] = '\0';
         strncpy(s->nom, trim(nom), 127);
         s->nom[127] = '\0';
         strncpy(s->description, trim(desc), MAX_DESC - 1);
@@ -88,7 +97,7 @@ int charger_solutions(BaseSolutions *bs, const char *fichier)
 
     fclose(fp);
     printf("  %d solution(s) chargee(s) depuis '%s'\n", nb, fichier);
-    return 1;
+    return nb;
 }
 
 /* ================================================================== */
@@ -99,6 +108,7 @@ int charger_questions(BaseSolutions *bs, const char *fichier)
 {
     FILE *fp;
     char ligne[512];
+    char categorie_courante[128] = "";
     int nb = 0;
 
     if (bs == NULL || fichier == NULL) return 0;
@@ -113,8 +123,30 @@ int charger_questions(BaseSolutions *bs, const char *fichier)
         char *lit, *desc;
         Question *q;
 
-        if (ligne[0] == '#' || ligne[0] == '\n' || ligne[0] == '\r')
+        if (ligne[0] == '\n' || ligne[0] == '\r')
             continue;
+
+        /* Commentaires : detecter les lignes de categorie (# === CAT ===) */
+        if (ligne[0] == '#') {
+            char *cat = ligne + 1;
+            size_t l;
+            while (*cat == ' ') cat++;
+            /* Retirer le marqueur "=== " en debut et " ===" en fin */
+            if (strncmp(cat, "=== ", 4) == 0) {
+                char *end;
+                cat += 4;
+                end = strstr(cat, " ===");
+                if (end) *end = '\0';
+            }
+            l = strlen(cat);
+            while (l > 0 && (cat[l-1] == '\n' || cat[l-1] == '\r' || cat[l-1] == ' '))
+                cat[--l] = '\0';
+            if (l > 0) {
+                strncpy(categorie_courante, cat, 127);
+                categorie_courante[127] = '\0';
+            }
+            continue;
+        }
 
         lit  = strtok(ligne, "|");
         desc = strtok(NULL, "|");
@@ -126,6 +158,8 @@ int charger_questions(BaseSolutions *bs, const char *fichier)
 
         strncpy(q->litteral, trim(lit), MAX_NOM - 1);
         q->litteral[MAX_NOM - 1] = '\0';
+        strncpy(q->categorie, categorie_courante, 127);
+        q->categorie[127] = '\0';
         strncpy(q->description, trim(desc), MAX_DESC - 1);
         q->description[MAX_DESC - 1] = '\0';
 
@@ -137,7 +171,7 @@ int charger_questions(BaseSolutions *bs, const char *fichier)
 
     fclose(fp);
     printf("  %d question(s) chargee(s) depuis '%s'\n", nb, fichier);
-    return 1;
+    return nb;
 }
 
 /* ================================================================== */

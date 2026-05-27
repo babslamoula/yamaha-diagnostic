@@ -3,6 +3,9 @@
 #ifndef INTERFACE_H
 #define INTERFACE_H
 
+#include "solutions.h"
+#include "base_faits.h"
+
 void effacer_ecran(void);
 void pause_ecran(void);
 void afficher_banniere(void);
@@ -17,5 +20,21 @@ void demander_fichier(char *buffer, int taille, const char *message);
 
 int menu_selection_modele(void);
 int menu_selection_annee(int modele);
+
+/* Sous-menu chainage arriere : deux niveaux (categorie puis panne).
+ * Remplit 'but' avec l'identifiant diagnostic selectionne.
+ * Retourne 1 si une panne a ete choisie, 0 si annule. */
+int menu_chainage_arriere(const BaseSolutions *bs, char *but, int taille_but);
+
+/* Saisie interactive des symptomes pour le chainage avant.
+ * Pose des questions oui/non par categorie et remplit bf.
+ * Retourne le nombre de symptomes ajoutes. */
+int menu_saisie_symptomes(const BaseSolutions *bs, BaseFaits *bf);
+
+/* Affiche les diagnostics (diag_*) nouvellement deduits par chainage avant.
+ * bf_avant peut etre NULL pour afficher tous les diag_* de bf_apres. */
+void afficher_diagnostics_chaines(const BaseFaits *bf_avant,
+                                   const BaseFaits *bf_apres,
+                                   const BaseSolutions *bs);
 
 #endif /* INTERFACE_H */

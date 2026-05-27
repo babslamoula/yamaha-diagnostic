@@ -11,6 +11,7 @@
 
 typedef struct Solution {
     char diagnostic[MAX_NOM];
+    char categorie[128];
     char nom[128];
     char description[MAX_DESC];
     char solution[MAX_SOL];
@@ -20,6 +21,7 @@ typedef struct Solution {
 
 typedef struct Question {
     char litteral[MAX_NOM];
+    char categorie[128];
     char description[MAX_DESC];
     struct Question *suivant;
 } Question;

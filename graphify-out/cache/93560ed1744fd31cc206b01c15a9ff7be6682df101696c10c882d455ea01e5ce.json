@@ -1,0 +1,1 @@
+{"nodes": [{"id": "include_solutions_h", "label": "solutions.h", "file_type": "code", "source_file": "include/solutions.h", "source_location": "L1"}], "edges": [{"source": "include_solutions_h", "target": "structures", "relation": "imports", "confidence": "EXTRACTED", "source_file": "include/solutions.h", "source_location": "L6", "weight": 1.0}], "raw_calls": []}

@@ -11,18 +11,11 @@
 #include "fichiers.h"
 #include "base_regles.h"
 #include "base_faits.h"
+#include "util.h"
 
-/* supprime les espaces en debut et fin de chaine */
-static char *trim_str(char *s)
-{
-    char *end;
-    while (isspace((unsigned char)*s)) s++;
-    if (*s == '\0') return s;
-    end = s + strlen(s) - 1;
-    while (end > s && isspace((unsigned char)*end)) end--;
-    *(end + 1) = '\0';
-    return s;
-}
+/* trim_str etait duplique avec solutions.c::trim (audit P2 #13).
+ * Conserve comme wrapper local pour ne pas alourdir le diff des callers. */
+#define trim_str(s) util_trim(s)
 
 /* ================================================================== */
 /*  REGLES                                                             */
@@ -49,6 +42,21 @@ int charger_base_regles(BaseRegles *br, const char *fichier)
         char *conc;
         Regle *r;
         char token[MAX_NOM];
+        size_t llen = strlen(ligne);
+
+        /* Detecte une ligne tronquee par fgets : si le buffer est plein et
+         * qu'il n'y a pas de '\n' en fin, on a coupe une ligne en deux. La
+         * suite serait lue comme une regle bidon. On consomme le reste de
+         * la ligne et on signale l'erreur. (audit P1 #6) */
+        if (llen == sizeof(ligne) - 1 && ligne[llen - 1] != '\n') {
+            int c;
+            fprintf(stderr, "  [!] Ligne >%zu chars dans '%s' - ignoree.\n",
+                    sizeof(ligne) - 1, fichier);
+            do {
+                c = fgetc(fp);
+            } while (c != EOF && c != '\n');
+            continue;
+        }
 
         /* commentaires et lignes vides */
         p = trim_str(ligne);
@@ -105,7 +113,7 @@ int charger_base_regles(BaseRegles *br, const char *fichier)
 
     fclose(fp);
     printf("  %d regle(s) chargee(s) depuis '%s'\n", nb, fichier);
-    return 1;
+    return nb;
 }
 
 int sauvegarder_base_regles(const BaseRegles *br, const char *fichier)
@@ -177,7 +185,7 @@ int charger_base_faits(BaseFaits *bf, const char *fichier)
 
     fclose(fp);
     printf("  %d fait(s) charge(s) depuis '%s'\n", nb, fichier);
-    return 1;
+    return nb;
 }
 
 int sauvegarder_base_faits(const BaseFaits *bf, const char *fichier)
