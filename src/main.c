@@ -123,13 +123,10 @@ int main(int argc, char *argv[])
                 pause_ecran();
                 break;
             }
-            printf("\n  But a verifier : ");
-            if (scanf("%63s", but) != 1) {
-                while (getchar() != '\n')
-                    ;
+            if (!selectionner_diagnostic(&bs, but, MAX_NOM)) {
+                pause_ecran();
                 break;
             }
-            while (getchar() != '\n');
 
             liberer_base_faits(&bf_travail);
             copier_base_faits(&bf_travail, &bf);

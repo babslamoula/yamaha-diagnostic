@@ -36,6 +36,8 @@ int             charger_solutions(BaseSolutions *bs, const char *fichier);
 int             charger_questions(BaseSolutions *bs, const char *fichier);
 const Solution *trouver_solution(const BaseSolutions *bs, const char *diag);
 const char     *trouver_question(const BaseSolutions *bs, const char *litteral);
+int             selectionner_diagnostic(const BaseSolutions *bs, char *diagnostic,
+                                        int taille);
 void            afficher_solution(const Solution *sol);
 void            liberer_base_solutions(BaseSolutions *bs);
 

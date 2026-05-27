@@ -40,8 +40,13 @@ int charger_solutions(BaseSolutions *bs, const char *fichier)
     FILE *fp;
     char ligne[1024];
     int nb = 0;
+    Solution *dernier = NULL;
 
     if (bs == NULL || fichier == NULL) return 0;
+
+    dernier = bs->solutions;
+    while (dernier != NULL && dernier->suivant != NULL)
+        dernier = dernier->suivant;
 
     fp = fopen(fichier, "r");
     if (fp == NULL) {
@@ -80,8 +85,13 @@ int charger_solutions(BaseSolutions *bs, const char *fichier)
         strncpy(s->cout, trim(cout), MAX_COUT - 1);
         s->cout[MAX_COUT - 1] = '\0';
 
-        s->suivant = bs->solutions;
-        bs->solutions = s;
+        s->suivant = NULL;
+        if (bs->solutions == NULL) {
+            bs->solutions = s;
+        } else {
+            dernier->suivant = s;
+        }
+        dernier = s;
         bs->nb_solutions++;
         nb++;
     }
@@ -168,6 +178,60 @@ const char *trouver_question(const BaseSolutions *bs, const char *litteral)
         q = q->suivant;
     }
     return NULL;
+}
+
+int selectionner_diagnostic(const BaseSolutions *bs, char *diagnostic, int taille)
+{
+    const Solution *s;
+    int choix;
+    int i = 1;
+
+    if (bs == NULL || diagnostic == NULL || taille <= 0)
+        return 0;
+
+    printf("\n  === PANNES DISPONIBLES POUR LE CHAINAGE ARRIERE ===\n\n");
+    s = bs->solutions;
+    while (s != NULL) {
+        printf("  %2d. %s\n", i, s->nom);
+        s = s->suivant;
+        i++;
+    }
+    printf("\n   0. Saisir un but technique manuellement\n");
+    printf("\n  Panne a verifier : ");
+
+    if (scanf("%d", &choix) != 1) {
+        while (getchar() != '\n');
+        diagnostic[0] = '\0';
+        return 0;
+    }
+    while (getchar() != '\n');
+
+    if (choix == 0) {
+        printf("  But (ex: diag_fusible_principal) : ");
+        if (fgets(diagnostic, taille, stdin) != NULL) {
+            size_t len = strlen(diagnostic);
+            if (len > 0 && diagnostic[len - 1] == '\n')
+                diagnostic[len - 1] = '\0';
+        } else {
+            diagnostic[0] = '\0';
+        }
+        return diagnostic[0] != '\0';
+    }
+
+    if (choix < 1 || choix >= i) {
+        printf("  [!] Choix invalide.\n");
+        diagnostic[0] = '\0';
+        return 0;
+    }
+
+    s = bs->solutions;
+    for (i = 1; i < choix; i++)
+        s = s->suivant;
+
+    strncpy(diagnostic, s->diagnostic, taille - 1);
+    diagnostic[taille - 1] = '\0';
+    printf("\n  Verification de : %s\n", s->nom);
+    return 1;
 }
 
 /* ================================================================== */
