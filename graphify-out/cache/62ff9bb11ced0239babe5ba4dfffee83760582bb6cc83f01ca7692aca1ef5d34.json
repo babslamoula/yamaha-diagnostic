@@ -1,1 +1,0 @@
-{"nodes": [{"id": "include_moteur_h", "label": "moteur.h", "file_type": "code", "source_file": "include/moteur.h", "source_location": "L1"}], "edges": [{"source": "include_moteur_h", "target": "structures", "relation": "imports", "confidence": "EXTRACTED", "source_file": "include/moteur.h", "source_location": "L6", "weight": 1.0}], "raw_calls": []}

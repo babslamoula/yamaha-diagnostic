@@ -1,1 +1,0 @@
-{"nodes": [{"id": "include_base_faits_h", "label": "base_faits.h", "file_type": "code", "source_file": "include/base_faits.h", "source_location": "L1"}], "edges": [{"source": "include_base_faits_h", "target": "structures", "relation": "imports", "confidence": "EXTRACTED", "source_file": "include/base_faits.h", "source_location": "L6", "weight": 1.0}], "raw_calls": []}
