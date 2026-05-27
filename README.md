@@ -1,7 +1,7 @@
 # Yamaha Diagnostic - Systeme Expert
 
 Systeme expert de diagnostic de pannes pour motos Yamaha (plateformes CP2 / CP3 / CP4).
-Projet S6 - ITII P23.
+Projet S6 - ISEN P23.
 
 ## Compilation
 

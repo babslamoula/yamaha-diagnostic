@@ -1,5 +1,5 @@
 /* main.c - point d'entree du systeme expert Yamaha
- * Projet S6 - ITII P23 - Mars 2026
+ * Projet S6 - ISEN P23 - Mars 2026
  */
 
 #include <stdio.h>
