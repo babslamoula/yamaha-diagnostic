@@ -1,46 +1,60 @@
-CC      = gcc
-WARN    = -Wall -Wextra -pedantic -Wshadow -std=c99
-CFLAGS  = $(WARN) -O2 -Iinclude -MMD -MP
-LDFLAGS =
+yamaha_diag : obj/main.o obj/base_faits.o obj/base_regles.o obj/fichiers.o obj/interface.o obj/moteur.o obj/solutions.o obj/structures.o obj/util.o
+	gcc obj/main.o obj/base_faits.o obj/base_regles.o obj/fichiers.o obj/interface.o obj/moteur.o obj/solutions.o obj/structures.o obj/util.o -o yamaha_diag -Wall -Wextra -pedantic -Wshadow -std=c99 -O2
 
-# Build debug : symboles + ASAN/UBSAN actifs
-#   make debug
-DEBUG_FLAGS = $(WARN) -O0 -g -Iinclude -MMD -MP \
-              -fsanitize=address -fsanitize=undefined
+obj :
+	mkdir -p obj
 
-SRC_DIR = src
-OBJ_DIR = obj
-BIN     = yamaha_diag
+obj/main.o : src/main.c include/base_faits.h include/base_regles.h include/fichiers.h include/interface.h include/moteur.h include/solutions.h include/structures.h include/util.h | obj
+	gcc -c src/main.c -o obj/main.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O2 -Iinclude
 
-SRCS = $(wildcard $(SRC_DIR)/*.c)
-OBJS = $(patsubst $(SRC_DIR)/%.c, $(OBJ_DIR)/%.o, $(SRCS))
-DEPS = $(OBJS:.o=.d)
+obj/base_faits.o : src/base_faits.c include/base_faits.h include/structures.h include/util.h | obj
+	gcc -c src/base_faits.c -o obj/base_faits.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O2 -Iinclude
 
-.PHONY: all clean debug test help
+obj/base_regles.o : src/base_regles.c include/base_regles.h include/structures.h include/util.h | obj
+	gcc -c src/base_regles.c -o obj/base_regles.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O2 -Iinclude
 
-all: $(OBJ_DIR) $(BIN)
+obj/fichiers.o : src/fichiers.c include/fichiers.h include/base_faits.h include/base_regles.h include/structures.h include/util.h | obj
+	gcc -c src/fichiers.c -o obj/fichiers.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O2 -Iinclude
 
-$(OBJ_DIR):
-	mkdir -p $(OBJ_DIR)
+obj/interface.o : src/interface.c include/interface.h include/base_faits.h include/base_regles.h include/fichiers.h include/moteur.h include/solutions.h include/structures.h include/util.h | obj
+	gcc -c src/interface.c -o obj/interface.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O2 -Iinclude
 
-$(BIN): $(OBJS)
-	$(CC) $(OBJS) -o $@ $(LDFLAGS)
+obj/moteur.o : src/moteur.c include/moteur.h include/base_faits.h include/base_regles.h include/structures.h include/util.h | obj
+	gcc -c src/moteur.c -o obj/moteur.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O2 -Iinclude
 
-$(OBJ_DIR)/%.o: $(SRC_DIR)/%.c | $(OBJ_DIR)
-	$(CC) $(CFLAGS) -c $< -o $@
+obj/solutions.o : src/solutions.c include/solutions.h include/structures.h include/util.h | obj
+	gcc -c src/solutions.c -o obj/solutions.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O2 -Iinclude
 
-# Inclure les .d generes par -MMD pour reconstruire quand un header change
--include $(DEPS)
+obj/structures.o : src/structures.c include/structures.h include/util.h | obj
+	gcc -c src/structures.c -o obj/structures.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O2 -Iinclude
 
-debug: clean
-	$(MAKE) CFLAGS="$(DEBUG_FLAGS)" LDFLAGS="-fsanitize=address -fsanitize=undefined"
+obj/util.o : src/util.c include/util.h | obj
+	gcc -c src/util.c -o obj/util.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O2 -Iinclude
 
-# Tests fumee : verifient les 3 bugs P0 (EOF, cycle, MT-07 cliquetis)
-test: all
-	@bash tests/smoke.sh
+debug : clean obj
+	gcc -c src/main.c -o obj/main.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O0 -g -Iinclude -fsanitize=address -fsanitize=undefined
+	gcc -c src/base_faits.c -o obj/base_faits.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O0 -g -Iinclude -fsanitize=address -fsanitize=undefined
+	gcc -c src/base_regles.c -o obj/base_regles.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O0 -g -Iinclude -fsanitize=address -fsanitize=undefined
+	gcc -c src/fichiers.c -o obj/fichiers.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O0 -g -Iinclude -fsanitize=address -fsanitize=undefined
+	gcc -c src/interface.c -o obj/interface.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O0 -g -Iinclude -fsanitize=address -fsanitize=undefined
+	gcc -c src/moteur.c -o obj/moteur.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O0 -g -Iinclude -fsanitize=address -fsanitize=undefined
+	gcc -c src/solutions.c -o obj/solutions.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O0 -g -Iinclude -fsanitize=address -fsanitize=undefined
+	gcc -c src/structures.c -o obj/structures.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O0 -g -Iinclude -fsanitize=address -fsanitize=undefined
+	gcc -c src/util.c -o obj/util.o -Wall -Wextra -pedantic -Wshadow -std=c99 -O0 -g -Iinclude -fsanitize=address -fsanitize=undefined
+	gcc obj/main.o obj/base_faits.o obj/base_regles.o obj/fichiers.o obj/interface.o obj/moteur.o obj/solutions.o obj/structures.o obj/util.o -o yamaha_diag -Wall -Wextra -pedantic -Wshadow -std=c99 -fsanitize=address -fsanitize=undefined
 
-clean:
-	rm -rf $(OBJ_DIR) $(BIN)
+test : yamaha_diag
+	bash tests/smoke.sh
+	make -C tests PROJECT_DIR="$(CURDIR)" clean run
 
-help:
-	@echo "Cibles : all (defaut), clean, debug, test"
+docs :
+	doxygen Doxyfile
+
+clean-docs :
+	rm -rf docs/html
+
+clean :
+	rm -rf obj yamaha_diag
+
+help :
+	@echo "Cibles : yamaha_diag, clean, debug, test, docs, clean-docs"

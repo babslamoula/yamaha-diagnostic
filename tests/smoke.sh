@@ -2,8 +2,10 @@
 # tests/smoke.sh - reproduit les 3 bugs P0 et valide qu'ils sont fixes.
 #
 # Bug #1 : EOF stdin -> le binaire devait bouclait, doit maintenant exit < 5s.
-# Bug #2 : cycle A -> B ; B -> A ; -> segfault avant, doit retourner "pas
-#          verifie" sans crasher.
+# Bug #2 : cycle A -> B ; B -> A ; -> segfault avant, doit retourner faux
+#          sans crasher. L'interface de chainage arriere choisit maintenant
+#          une panne par categorie ; ce cas bas niveau est donc valide via le
+#          test unitaire du moteur.
 # Bug #3 : MT-07 + cliquetis -> doit remonter "Maladie CCT" CP2 (200 EUR)
 #          et non plus "Tendeur chaine distrib" generique (150 EUR).
 
@@ -17,6 +19,25 @@ run_with_timeout() {
     # $1 = timeout seconds, $2 = file with stdin, $3 = output file
     local secs=$1 inp=$2 out=$3
     ( "$BIN" < "$inp" > "$out" 2>&1 ) &
+    local pid=$!
+    local i=0
+    while kill -0 "$pid" 2>/dev/null && [ "$i" -lt "$secs" ]; do
+        sleep 1
+        i=$((i + 1))
+    done
+    if kill -0 "$pid" 2>/dev/null; then
+        kill -9 "$pid" 2>/dev/null
+        return 124
+    fi
+    wait "$pid" 2>/dev/null
+    return $?
+}
+
+run_command_with_timeout() {
+    # $1 = timeout seconds, remaining args = command
+    local secs=$1
+    shift
+    ( "$@" ) &
     local pid=$!
     local i=0
     while kill -0 "$pid" 2>/dev/null && [ "$i" -lt "$secs" ]; do
@@ -57,31 +78,14 @@ else
 fi
 
 # --- Bug #2 : cycle ---
-cat > /tmp/yd_t2_rules.txt <<'EOF'
-A -> B ;
-B -> A ;
-EOF
-cat > /tmp/yd_t2.in <<EOF
-
-5
-0
-/tmp/yd_t2_rules.txt
-
-3
-A
-non
-non
-
-0
-EOF
-run_with_timeout 5 /tmp/yd_t2.in /tmp/yd_t2.out
-rc=$?
-if [ "$rc" -eq 124 ]; then
-    check "Bug #2 - cycle ne hang plus" FAIL
-elif [ "$rc" -gt 128 ] || [ "$rc" -eq 139 ]; then
-    check "Bug #2 - cycle ne segfault plus" FAIL
-elif grep -q "Resultat : A ne peut pas etre verifie" /tmp/yd_t2.out; then
-    check "Bug #2 - cycle correctement rejete" PASS
+rm -f tests/bin/test_moteur
+if make -C tests PROJECT_DIR="$(pwd)" bin/test_moteur >/tmp/yd_t2_build.out 2>&1 &&
+   run_command_with_timeout 5 tests/bin/test_moteur >/tmp/yd_t2.out 2>&1; then
+    if grep -q "\\[OK\\] moteur" /tmp/yd_t2.out; then
+        check "Bug #2 - cycle correctement rejete" PASS
+    else
+        check "Bug #2 - cycle correctement rejete" FAIL
+    fi
 else
     check "Bug #2 - cycle correctement rejete" FAIL
 fi

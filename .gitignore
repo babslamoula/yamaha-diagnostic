@@ -1,5 +1,8 @@
 obj/
 yamaha_diag
+tests/bin/
 *.o
 *.DS_Store
 graphify/
+docs/html/
+docs/latex/

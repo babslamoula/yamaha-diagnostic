@@ -1,82 +1,178 @@
-# Yamaha Diagnostic - Systeme Expert
+# Yamaha Diagnostic - Systeme expert
 
-Systeme expert de diagnostic de pannes pour motos Yamaha (plateformes CP2 / CP3 / CP4).
-Projet S6 - ISEN P23.
+Projet ISENA3 - Techniques de Programmation / Intelligence Artificielle  
+Groupe : Baptiste, Isaie, Lucas
+
+Yamaha Diagnostic est une application console en C qui aide a diagnostiquer des pannes de motos Yamaha sur les plateformes CP2, CP3 et CP4. Le programme utilise une base de faits, une base de regles et un moteur d'inference pour proposer un diagnostic, une solution et un cout estime.
+
+## Fonctionnalites
+
+- Diagnostic guide par questions oui/non.
+- Selection du modele Yamaha et de la generation.
+- Chainage avant pour deduire toutes les pannes possibles.
+- Chainage arriere pour verifier un diagnostic cible.
+- Gestion manuelle des faits et des regles.
+- Chargement et sauvegarde de bases texte.
+- Validation de la base de regles au chargement.
+- Documentation Doxygen.
+- Tests fumee et tests unitaires de modules.
+
+## Prerequis
+
+- `make`
+- `gcc` ou `clang`
+- optionnel : `doxygen` pour generer la documentation HTML
+
+Le projet n'utilise pas de bibliotheque externe obligatoire.
 
 ## Compilation
 
-```bash
-make            # build release (-O2)
-make debug      # build debug + ASAN/UBSAN
-make test       # tests fumee (regressions audit P0)
+```sh
+make
+```
+
+Compilation debug avec ASAN/UBSAN :
+
+```sh
+make debug
+```
+
+Nettoyage :
+
+```sh
 make clean
 ```
 
 ## Lancement
 
-```bash
-./yamaha_diag                       # bases dans ./data par defaut
-./yamaha_diag --data /chemin/data   # repertoire de bases personnalise
-./yamaha_diag --help                # toutes les options
+```sh
+./yamaha_diag
+```
+
+Options disponibles :
+
+```sh
+./yamaha_diag --help
 ./yamaha_diag --version
-```
-
-## Structure
-
-```
-src/        sources C
-include/    headers
-data/       bases de regles, solutions et questions
-tests/      tests fumee (smoke.sh)
-```
-
-## Fonctionnalites
-
-- Diagnostic guide (mode Akinator) : selection modele -> generation -> questions symptomes -> panne identifiee + solution + cout estime
-- Chainage avant : deduit tous les faits a partir d'une base de faits
-- Chainage arriere : verifie un but precis (avec detection de cycle pour eviter les boucles infinies dans la base)
-- Gestion manuelle des regles et faits
-- Chargement / sauvegarde de bases au format texte
-- Validation au chargement (auto-reference, cycles directs, litteraux orphelins)
-
-## Modeles supportes
-
-**CP4** : YZF-R1, MT-10
-
-**CP2** : MT-07, Tracer 7 (le Tracer 700 et Tracer 7 partagent le meme moteur CP2 ; les diagnostics specifiques visent le Tracer 7 a partir de 2020), Tenere 700, XSR 700
-
-**CP3** : MT-09, Tracer 900, XSR 900, Niken
-
-## Format des fichiers de base
-
-### `yamaha_regles.txt`
-
-```
-hypothese1 hypothese2 ... -> conclusion ;
-```
-
-Une ligne par regle. Lignes commencant par `#` ignorees.
-
-### `yamaha_solutions.txt`
-
-```
-diag_id|nom|description|solution|cout_eur
-```
-
-### `yamaha_questions.txt`
-
-```
-litteral_id|question affichee
+./yamaha_diag --data ./data
 ```
 
 ## Tests
 
-`make test` execute `tests/smoke.sh` qui couvre les 3 regressions audit P0 :
+```sh
+make test
+```
 
-- EOF sur stdin ne fait pas hang
-- Cycle dans la base ne fait pas segfault
-- Diagnostic plateforme l'emporte sur le diagnostic generique
+La cible lance :
 
-## Audit
+- `tests/smoke.sh` pour les regressions critiques ;
+- `tests/Makefile` pour les tests unitaires C.
 
-Voir [AUDIT.md](AUDIT.md) pour la liste complete des bugs identifies et leur statut.
+Derniere validation avant rendu :
+
+```text
+Tests fumee : 3 pass / 0 fail
+Tests unitaires : 7 pass / 0 fail
+```
+
+Les tests couvrent notamment :
+
+- entree standard fermee sans boucle infinie ;
+- cycle dans la base de regles sans crash ;
+- priorite des diagnostics Yamaha specifiques sur les diagnostics generiques ;
+- chargement/sauvegarde de faits et regles ;
+- structures, listes chainees, moteur, solutions et interface.
+
+## Documentation
+
+```sh
+make docs
+```
+
+La documentation HTML est generee dans :
+
+```text
+docs/html/index.html
+```
+
+Nettoyage de la documentation generee :
+
+```sh
+make clean-docs
+```
+
+## Arborescence
+
+```text
+src/        sources C
+include/    headers
+data/       bases de regles, questions, solutions et jeux de test
+tests/      tests unitaires et tests fumee
+docs/       source Doxygen et documentation generee
+rendu/      rapport, cahier de tests, guide et presentation
+```
+
+## Donnees metier
+
+La base Yamaha contient :
+
+- 64 regles ;
+- 81 questions ;
+- 47 solutions de diagnostic.
+
+Modeles couverts :
+
+- CP4 : YZF-R1, MT-10 ;
+- CP2 : MT-07, Tracer 7, Tenere 700, XSR 700 ;
+- CP3 : MT-09, Tracer 900, XSR 900, Niken.
+
+## Formats de fichiers
+
+Regles :
+
+```text
+hypothese1 hypothese2 -> conclusion ;
+```
+
+Faits :
+
+```text
+fait ;
+```
+
+Solutions :
+
+```text
+diag_id|nom|description|solution|cout_eur
+```
+
+Questions :
+
+```text
+litteral_id|question affichee
+```
+
+## Livrables de rendu
+
+Le dossier `rendu/` contient :
+
+- `rapport_yamaha_diagnostic_ISENA3.md` et `.docx` ;
+- `cahier_tests_yamaha_diagnostic.md` et `.docx` ;
+- `guide_installation_utilisation.md` et `.docx` ;
+- `presentation_yamaha_diagnostic_ISENA3.html` ;
+- `presentation_yamaha_diagnostic_ISENA3.md` et `.docx` ;
+- `script_video_presentation.md` ;
+- `checklist_rendu.md`.
+
+Ne pas rendre les artefacts generes :
+
+- `yamaha_diag`
+- `obj/`
+- `tests/bin/`
+- `.idea/`
+- `.DS_Store`
+
+## Audit technique
+
+Le fichier `AUDIT.md` decrit les anomalies trouvees pendant la fiabilisation et leur statut.
+
